@@ -1,16 +1,12 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 st.set_page_config(
-    page_title="서울 기온 변화 분석",
-    page_icon="🌡️",
+    page_title="서울 기온 분석",
     layout="wide"
 )
 
-st.title("🌡️ 서울 특정 날짜 기온 변화")
-
-# 데이터 불러오기
 @st.cache_data
 def load_data():
     df = pd.read_csv("seoul.csv", encoding="cp949")
@@ -24,88 +20,51 @@ def load_data():
 
 df = load_data()
 
-st.sidebar.header("날짜 선택")
+st.title("🌡️ 서울 기온 변화 분석")
 
-month = st.sidebar.selectbox(
-    "월 선택",
-    range(1, 13)
-)
+month = st.sidebar.selectbox("월", range(1, 13))
+day = st.sidebar.selectbox("일", range(1, 32))
 
-day = st.sidebar.selectbox(
-    "일 선택",
-    range(1, 32)
-)
-
-# 선택한 날짜 필터링
 filtered = df[
     (df["월"] == month) &
     (df["일"] == day)
-].copy()
-
-filtered = filtered.sort_values("연도")
-
-st.subheader(f"📈 {month}월 {day}일의 연도별 기온 변화")
+].sort_values("연도")
 
 if filtered.empty:
-    st.warning("해당 날짜의 데이터가 없습니다.")
+    st.warning("데이터가 없습니다.")
 else:
 
-    fig = go.Figure()
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-    # 최고기온
-    fig.add_trace(
-        go.Scatter(
-            x=filtered["연도"],
-            y=filtered["최고기온(℃)"],
-            mode="lines+markers",
-            name="최고기온",
-            line=dict(
-                color="hotpink",
-                width=3
-            ),
-            marker=dict(size=7)
-        )
+    ax.plot(
+        filtered["연도"],
+        filtered["최고기온(℃)"],
+        color="hotpink",
+        marker="o",
+        linewidth=2,
+        label="최고기온"
     )
 
-    # 최저기온
-    fig.add_trace(
-        go.Scatter(
-            x=filtered["연도"],
-            y=filtered["최저기온(℃)"],
-            mode="lines+markers",
-            name="최저기온",
-            line=dict(
-                color="lightblue",
-                width=3
-            ),
-            marker=dict(size=7)
-        )
+    ax.plot(
+        filtered["연도"],
+        filtered["최저기온(℃)"],
+        color="lightblue",
+        marker="o",
+        linewidth=2,
+        label="최저기온"
     )
 
-    fig.update_layout(
-        title=f"{month}월 {day}일 연도별 최고·최저기온",
-        xaxis_title="연도",
-        yaxis_title="기온(℃)",
-        hovermode="x unified",
-        template="plotly_white",
-        legend_title="기온 종류",
-        height=650
-    )
+    ax.set_title(f"{month}월 {day}일 연도별 기온 변화")
+    ax.set_xlabel("연도")
+    ax.set_ylabel("기온(℃)")
+    ax.legend()
+    ax.grid(True)
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-    st.subheader("📋 데이터")
+    st.pyplot(fig)
 
     st.dataframe(
         filtered[
-            [
-                "연도",
-                "최저기온(℃)",
-                "최고기온(℃)"
-            ]
+            ["연도", "최고기온(℃)", "최저기온(℃)"]
         ],
         use_container_width=True
     )
