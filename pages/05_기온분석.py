@@ -10,7 +10,12 @@ st.set_page_config(
 @st.cache_data
 def load_data():
     df = pd.read_csv("seoul.csv", encoding="cp949")
-    df["날짜"] = pd.to_datetime(df["날짜"])
+    df["날짜"] = pd.to_datetime(
+    df["날짜"],
+    errors="coerce"
+)
+
+df = df.dropna(subset=["날짜"])
 
     df["연도"] = df["날짜"].dt.year
     df["월"] = df["날짜"].dt.month
