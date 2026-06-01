@@ -4,18 +4,25 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="서울 기온 분석",
+    page_icon="🌡️",
     layout="wide"
 )
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("seoul.csv", encoding="cp949")
-    df["날짜"] = pd.to_datetime(
-    df["날짜"],
-    errors="coerce"
-)
+    df = pd.read_csv(
+        "seoul.csv",
+        encoding="cp949"
+    )
 
-df = df.dropna(subset=["날짜"])
+    df.columns = df.columns.str.strip()
+
+    df["날짜"] = pd.to_datetime(
+        df["날짜"],
+        errors="coerce"
+    )
+
+    df = df.dropna(subset=["날짜"])
 
     df["연도"] = df["날짜"].dt.year
     df["월"] = df["날짜"].dt.month
@@ -25,28 +32,36 @@ df = df.dropna(subset=["날짜"])
 
 df = load_data()
 
-st.title("🌡️ 서울 기온 변화 분석")
+st.title("🌡️ 서울 특정 날짜 기온 변화")
 
-month = st.sidebar.selectbox("월", range(1, 13))
-day = st.sidebar.selectbox("일", range(1, 32))
+month = st.sidebar.selectbox(
+    "월 선택",
+    range(1, 13)
+)
+
+day = st.sidebar.selectbox(
+    "일 선택",
+    range(1, 32)
+)
 
 filtered = df[
     (df["월"] == month) &
     (df["일"] == day)
-].sort_values("연도")
+].copy()
+
+filtered = filtered.sort_values("연도")
 
 if filtered.empty:
-    st.warning("데이터가 없습니다.")
+    st.warning("해당 날짜의 데이터가 없습니다.")
 else:
-
     fig, ax = plt.subplots(figsize=(12, 6))
 
     ax.plot(
         filtered["연도"],
         filtered["최고기온(℃)"],
         color="hotpink",
-        marker="o",
         linewidth=2,
+        marker="o",
         label="최고기온"
     )
 
@@ -54,12 +69,15 @@ else:
         filtered["연도"],
         filtered["최저기온(℃)"],
         color="lightblue",
-        marker="o",
         linewidth=2,
+        marker="o",
         label="최저기온"
     )
 
-    ax.set_title(f"{month}월 {day}일 연도별 기온 변화")
+    ax.set_title(
+        f"{month}월 {day}일 연도별 최고·최저기온"
+    )
+
     ax.set_xlabel("연도")
     ax.set_ylabel("기온(℃)")
     ax.legend()
@@ -69,7 +87,11 @@ else:
 
     st.dataframe(
         filtered[
-            ["연도", "최고기온(℃)", "최저기온(℃)"]
+            [
+                "연도",
+                "최고기온(℃)",
+                "최저기온(℃)"
+            ]
         ],
         use_container_width=True
     )
